@@ -1,33 +1,9 @@
 const express = require('express');
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
+
+const { writeData, readData, fetchData } = require('./utils/files');
 
 const app = express();
-
-function writeData() {
-  axios('https://fakestoreapi.com/products').then(({ data }) => {
-    const productsPath = path.join(__dirname, 'data', 'products.json');
-    try {
-      fs.writeFileSync(productsPath, JSON.stringify(data));
-    } catch (err) {
-      console.error('Error writing file : ', err.message);
-    }
-  });
-}
-
-function readData() {
-  const productsPath = path.join(__dirname, 'data', 'products.json');
-  try {
-    const products = fs.readFileSync(productsPath, 'utf-8');
-
-    return JSON.parse(products);
-  } catch (err) {
-    console.error('Error reading file : ', err.message);
-  }
-}
-
-// writeData();
+app.use(express.json());
 
 // API Restfull
 app.get('/api/v1/products', (req, res) => {
@@ -50,4 +26,19 @@ app.get('/api/v1/products/:id', (req, res) => {
   res.send(product);
 });
 
+app.post('/api/v1/products', (req, res) => {
+  const products = readData();
+
+  const totalProducts = products.length;
+
+  const product = { ...req.body, id: (totalProducts + 1).toString() };
+
+  products.push(product);
+
+  writeData(products);
+
+  res.status(201).send({ ok: true, data: product });
+});
+
+// 3 endpoints missing...
 app.listen(9000, () => console.log('Port 9000 on fire'));
