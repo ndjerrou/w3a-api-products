@@ -4,7 +4,31 @@ const Joi = require('joi');
 const { writeData, readData, fetchData } = require('./utils/files');
 
 const app = express();
-app.use(express.json());
+app.use((req, res, next) => {
+  console.log('M1');
+
+  // processing ...
+  console.log('CALL VIA METHOD : ', req.method);
+  console.log('req.name inside M1  ', req.name);
+  req.name = "kikoo je 'm'amuse";
+  next();
+});
+app.use((req, res, next) => {
+  console.log('M2');
+
+  // processing ...
+  console.log('M2 : req.body = ', req.body);
+  next();
+});
+app.use(express.json()); // req.body XX ==> req.body populé
+
+app.use((req, res, next) => {
+  console.log('M4');
+
+  console.log('M4 : req.body = ', req.body);
+
+  next();
+});
 
 // API Restfull
 app.get('/api/v1/products', (req, res) => {
@@ -29,6 +53,7 @@ app.get('/api/v1/products/:id', (req, res) => {
 
 app.post('/api/v1/products', (req, res) => {
   const products = readData();
+  console.log('is name ? ', req.name);
 
   const totalProducts = products.length;
 
