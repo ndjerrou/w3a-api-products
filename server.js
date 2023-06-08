@@ -1,37 +1,15 @@
 const express = require('express');
-const Joi = require('joi');
 
 const { writeData, readData, fetchData } = require('./utils/files');
+const verifyPayload = require('./middlewares/verifyPayload');
 
 const app = express();
-app.use((req, res, next) => {
-  console.log('M1');
 
-  // processing ...
-  console.log('CALL VIA METHOD : ', req.method);
-  console.log('req.name inside M1  ', req.name);
-  req.name = "kikoo je 'm'amuse";
-  next();
-});
-app.use((req, res, next) => {
-  console.log('M2');
-
-  // processing ...
-  console.log('M2 : req.body = ', req.body);
-  next();
-});
-app.use(express.json()); // req.body XX ==> req.body populé
-
-app.use((req, res, next) => {
-  console.log('M4');
-
-  console.log('M4 : req.body = ', req.body);
-
-  next();
-});
+app.use(express.json()); // req.body XX ==> populating req.body...
 
 // API Restfull
 app.get('/api/v1/products', (req, res) => {
+  //route handler - callback- middleware - controller
   const products = readData();
 
   res.send(products);
@@ -42,44 +20,15 @@ app.get('/api/v1/products/:id', (req, res) => {
 
   const { id } = req.params;
 
-  const product = products.find((product) => {
-    return product.id === +id;
-  });
-
-  console.log(product);
+  const product = products.find((product) => product.id === +id);
 
   res.send(product);
 });
 
-app.post('/api/v1/products', (req, res) => {
+app.post('/api/v1/products', verifyPayload, (req, res) => {
   const products = readData();
-  console.log('is name ? ', req.name);
 
-  const totalProducts = products.length;
-
-  const schema = Joi.object({
-    title: Joi.string().min(10).max(100).required(),
-    price: Joi.number().required(),
-    description: Joi.string().required(),
-    category: Joi.string().required(),
-    image: Joi.string().required(),
-    title: Joi.string().required(),
-    rating: Joi.required({
-      rate: Joi.number().required(),
-      count: Joi.number().required(),
-    }),
-  });
-
-  const result = schema.validate(req.body);
-
-  if (result.error) {
-    return res.status(400).send({
-      ok: false,
-      msg: result.error.details[0].message,
-    });
-  }
-
-  const product = { ...req.body, id: totalProducts + 1 };
+  const product = { ...req.body, id: products.length + 1 };
 
   products.push(product);
 
